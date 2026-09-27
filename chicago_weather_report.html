@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chicago Weather &amp; Environmental Report</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+      min-height: 100vh;
+      color: #e0eafc;
+      padding: 0 0 60px;
+    }
+
+    /* ── Hero Header ────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(160deg, #1a3a4a 0%, #0d2233 60%, #0a1a2e 100%);
+      padding: 52px 24px 40px;
+      text-align: center;
+      border-bottom: 1px solid rgba(100,180,255,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(56,182,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(56,182,255,0.15);
+      border: 1px solid rgba(56,182,255,0.35);
+      color: #7dd4f8;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 50px;
+      margin-bottom: 18px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, #7dd4f8, #a5c8f0, #e0eafc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.15;
+    }
+    .hero-sub {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #7a9ab5;
+      letter-spacing: 0.04em;
+    }
+    .hero-meta {
+      margin-top: 22px;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .hero-meta span {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      color: #a0c4d8;
+    }
+    .hero-meta span strong { color: #e0eafc; }
+
+    /* ── Section Layout ─────────────────────────────────── */
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+    .section { margin-top: 44px; }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #7dd4f8;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(125,212,248,0.4), transparent);
+    }
+
+    /* ── Current Conditions Banner ──────────────────────── */
+    .current-banner {
+      background: linear-gradient(135deg, rgba(28,68,100,0.85), rgba(14,38,60,0.9));
+      border: 1px solid rgba(125,212,248,0.2);
+      border-radius: 20px;
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      backdrop-filter: blur(8px);
+      position: relative;
+      overflow: hidden;
+    }
+    .current-banner::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(56,182,255,0.1), transparent 70%);
+      pointer-events: none;
+    }
+    .current-icon { font-size: 5rem; line-height: 1; }
+    .current-temp {
+      font-size: 3.8rem;
+      font-weight: 800;
+      color: #e0eafc;
+      line-height: 1;
+    }
+    .current-temp sup { font-size: 1.4rem; vertical-align: super; color: #7dd4f8; }
+    .current-desc { color: #a0c4d8; font-size: 1.05rem; margin-top: 4px; }
+    .current-stats {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .stat-pill {
+      text-align: center;
+    }
+    .stat-pill .val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #e0eafc;
+    }
+    .stat-pill .lbl {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6a8fa5;
+      margin-top: 2px;
+    }
+    .divider-v {
+      width: 1px;
+      height: 60px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* ── 3-Day Forecast Cards ───────────────────────────── */
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+    .day-card {
+      background: linear-gradient(160deg, rgba(30,70,105,0.7), rgba(16,42,68,0.8));
+      border: 1px solid rgba(125,212,248,0.15);
+      border-radius: 18px;
+      padding: 26px 22px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .day-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(56,182,255,0.05), transparent);
+      pointer-events: none;
+    }
+    .day-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    }
+    .day-card.today { border-color: rgba(125,212,248,0.4); }
+    .day-name {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #7dd4f8;
+      font-weight: 700;
+    }
+    .day-date { font-size: 0.88rem; color: #5d8aa0; margin-top: 2px; }
+    .day-icon { font-size: 2.8rem; margin: 14px 0 8px; }
+    .day-temps {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .temp-high { font-size: 2rem; font-weight: 800; color: #e0eafc; }
+    .temp-low { font-size: 1.2rem; color: #5d8aa0; }
+    .day-details { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; }
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 0.84rem;
+    }
+    .detail-row .key { color: #7a9ab5; }
+    .detail-row .val-text { color: #c8dff0; font-weight: 600; }
+
+    /* Precipitation bar */
+    .precip-bar-wrap { margin-top: 14px; }
+    .precip-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: #7a9ab5;
+      margin-bottom: 5px;
+    }
+    .precip-bar-bg {
+      background: rgba(255,255,255,0.08);
+      border-radius: 8px;
+      height: 7px;
+      overflow: hidden;
+    }
+    .precip-bar-fill {
+      height: 100%;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #38b6ff, #4dcfff);
+      transition: width 0.6s ease;
+    }
+
+    /* Weather condition pill */
+    .condition-pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-top: 10px;
+    }
+    .pill-clear { background: rgba(255,213,79,0.15); color: #ffe066; border: 1px solid rgba(255,213,79,0.3); }
+    .pill-cloudy { background: rgba(160,196,216,0.15); color: #a0c4d8; border: 1px solid rgba(160,196,216,0.3); }
+    .pill-rain { background: rgba(56,182,255,0.15); color: #38b6ff; border: 1px solid rgba(56,182,255,0.3); }
+
+    /* ── AQI Section ────────────────────────────────────── */
+    .aqi-layout {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 32px;
+      align-items: start;
+      background: linear-gradient(135deg, rgba(28,68,100,0.75), rgba(14,38,60,0.85));
+      border: 1px solid rgba(125,212,248,0.15);
+      border-radius: 20px;
+      padding: 32px 36px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 640px) { .aqi-layout { grid-template-columns: 1fr; } }
+    .aqi-score-wrap { text-align: center; }
+    .aqi-ring {
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      border: 6px solid #f0c040;
+      background: rgba(240,192,64,0.08);
+      margin: 0 auto;
+    }
+    .aqi-num { font-size: 2.4rem; font-weight: 900; color: #f0c040; }
+    .aqi-unit { font-size: 0.7rem; color: #9ab5c5; letter-spacing: 0.08em; margin-top: -4px; }
+    .aqi-label {
+      margin-top: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #f0c040;
+    }
+    .pollutant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 14px;
+    }
+    .pollutant-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .poll-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: #7a9ab5; }
+    .poll-val { font-size: 1.4rem; font-weight: 700; color: #e0eafc; margin-top: 4px; }
+    .poll-unit { font-size: 0.7rem; color: #5d8aa0; }
+    .aqi-bar-section { margin-top: 20px; }
+    .aqi-spectrum {
+      height: 10px;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #00e400 0%, #ffff00 17%, #ff7e00 33%, #ff0000 50%, #99004c 66%, #7e0023 100%);
+      position: relative;
+      margin-bottom: 6px;
+    }
+    .aqi-marker {
+      position: absolute;
+      top: -5px;
+      width: 20px; height: 20px;
+      background: #fff;
+      border: 3px solid #f0c040;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 8px rgba(240,192,64,0.6);
+    }
+    .aqi-spectrum-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.64rem;
+      color: #5d8aa0;
+    }
+
+    /* ── Marine Section ─────────────────────────────────── */
+    .marine-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 18px;
+    }
+    .marine-card {
+      background: linear-gradient(160deg, rgba(10,50,80,0.8), rgba(5,28,50,0.9));
+      border: 1px solid rgba(56,182,255,0.18);
+      border-radius: 16px;
+      padding: 24px 20px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+    .marine-card:hover { transform: translateY(-3px); }
+    .marine-icon { font-size: 2.4rem; margin-bottom: 10px; }
+    .marine-metric { font-size: 1.9rem; font-weight: 800; color: #7dd4f8; }
+    .marine-unit { font-size: 0.8rem; color: #5d8aa0; }
+    .marine-name { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: #7a9ab5; margin-top: 6px; }
+    .marine-note { font-size: 0.78rem; color: #4d7a92; margin-top: 4px; }
+
+    /* Wave compass */
+    .compass-wrap { position: relative; display: inline-block; margin-bottom: 8px; }
+    .compass-ring {
+      width: 70px; height: 70px;
+      border: 2px solid rgba(56,182,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      position: relative;
+    }
+    .compass-arrow {
+      font-size: 1.5rem;
+      display: inline-block;
+      transform: rotate(69deg);
+      color: #38b6ff;
+    }
+    .compass-label {
+      position: absolute;
+      font-size: 0.55rem;
+      color: #5d8aa0;
+      font-weight: 700;
+    }
+    .compass-label.n { top: 2px; left: 50%; transform: translateX(-50%); }
+    .compass-label.s { bottom: 2px; left: 50%; transform: translateX(-50%); }
+    .compass-label.e { right: 4px; top: 50%; transform: translateY(-50%); }
+    .compass-label.w { left: 4px; top: 50%; transform: translateY(-50%); }
+
+    /* ── Insights ───────────────────────────────────────── */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .insight-card {
+      border-radius: 14px;
+      padding: 20px 22px;
+      border-left: 4px solid;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .insight-card.good {
+      background: rgba(0,200,100,0.08);
+      border-color: #00c864;
+    }
+    .insight-card.moderate {
+      background: rgba(240,192,64,0.08);
+      border-color: #f0c040;
+    }
+    .insight-card.caution {
+      background: rgba(255,126,0,0.08);
+      border-color: #ff7e00;
+    }
+    .insight-card.info {
+      background: rgba(56,182,255,0.08);
+      border-color: #38b6ff;
+    }
+    .insight-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .insight-title { font-size: 0.88rem; font-weight: 700; color: #e0eafc; margin-bottom: 4px; }
+    .insight-body { font-size: 0.82rem; color: #8aafc5; line-height: 1.55; }
+
+    /* ── Footer ─────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      margin-top: 60px;
+      padding: 28px 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      color: #3d6070;
+      font-size: 0.78rem;
+    }
+    .footer strong { color: #5d8aa0; }
+
+    /* ── Responsive tweaks ──────────────────────────────── */
+    @media (max-width: 680px) {
+      .current-banner { flex-direction: column; gap: 20px; }
+      .current-stats { margin-left: 0; }
+      .divider-v { display: none; }
+      .aqi-layout { gap: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HERO HEADER
+══════════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge">🌐 Environmental Dashboard</div>
+    <h1>Chicago Weather Report</h1>
+    <p class="hero-sub">3-Day Forecast &bull; Air Quality &bull; Lake Michigan Marine Conditions</p>
+    <div class="hero-meta">
+      <span>📍 <strong>41.85°N, 87.65°W</strong></span>
+      <span>🕐 <strong>Generated:</strong> Sep 25, 2026 — 21:45 CDT</span>
+      <span>🏙️ <strong>Timezone:</strong> America/Chicago (GMT−5)</span>
+      <span>⛰️ <strong>Elevation:</strong> 178 m</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- ══════════════════════════════════════════════════════
+       CURRENT CONDITIONS
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <h2 class="section-title">⚡ Current Conditions</h2>
+    <div class="current-banner">
+      <div class="current-icon">☀️</div>
+      <div>
+        <div class="current-temp">13.3<sup>°C</sup></div>
+        <div class="current-desc">Clear Sky &bull; 55.9°F</div>
+      </div>
+      <div class="divider-v"></div>
+      <div class="current-stats">
+        <div class="stat-pill">
+          <div class="val">71%</div>
+          <div class="lbl">Humidity</div>
+        </div>
+        <div class="stat-pill">
+          <div class="val">51</div>
+          <div class="lbl">US AQI</div>
+        </div>
+        <div class="stat-pill">
+          <div class="val">0.22m</div>
+          <div class="lbl">Wave Ht.</div>
+        </div>
+        <div class="stat-pill">
+          <div class="val">11.2</div>
+          <div class="lbl">Wind km/h</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       3-DAY FORECAST
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <h2 class="section-title">📅 3-Day Forecast</h2>
+    <div class="forecast-grid">
+
+      <!-- Day 1: Sep 26 -->
+      <div class="day-card today">
+        <div class="day-name">Tomorrow</div>
+        <div class="day-date">Saturday, Sep 26</div>
+        <div class="day-icon">☀️</div>
+        <div class="day-temps">
+          <span class="temp-high">16.9°C</span>
+          <span class="temp-low">12.1°C</span>
+        </div>
+        <div><span class="condition-pill pill-clear">Clear</span></div>
+        <div class="day-details">
+          <div class="detail-row">
+            <span class="key">💨 Max Wind</span>
+            <span class="val-text">16.9 km/h</span>
+          </div>
+          <div class="detail-row">
+            <span class="key">🌧️ Precipitation</span>
+            <span class="val-text">0.0 mm</span>
+          </div>
+          <div class="precip-bar-wrap">
+            <div class="precip-label">
+              <span>Rain Probability</span>
+              <span>0%</span>
+            </div>
+            <div class="precip-bar-bg">
+              <div class="precip-bar-fill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 2: Sep 27 -->
+      <div class="day-card">
+        <div class="day-name">Day 2</div>
+        <div class="day-date">Sunday, Sep 27</div>
+        <div class="day-icon">🌤️</div>
+        <div class="day-temps">
+          <span class="temp-high">19.0°C</span>
+          <span class="temp-low">9.4°C</span>
+        </div>
+        <div><span class="condition-pill pill-clear">Mostly Clear</span></div>
+        <div class="day-details">
+          <div class="detail-row">
+            <span class="key">💨 Max Wind</span>
+            <span class="val-text">11.0 km/h</span>
+          </div>
+          <div class="detail-row">
+            <span class="key">🌧️ Precipitation</span>
+            <span class="val-text">0.0 mm</span>
+          </div>
+          <div class="precip-bar-wrap">
+            <div class="precip-label">
+              <span>Rain Probability</span>
+              <span>0%</span>
+            </div>
+            <div class="precip-bar-bg">
+              <div class="precip-bar-fill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day 3: Sep 28 -->
+      <div class="day-card">
+        <div class="day-name">Day 3</div>
+        <div class="day-date">Monday, Sep 28</div>
+        <div class="day-icon">⛅</div>
+        <div class="day-temps">
+          <span class="temp-high">20.6°C</span>
+          <span class="temp-low">14.6°C</span>
+        </div>
+        <div><span class="condition-pill pill-cloudy">Partly Cloudy</span></div>
+        <div class="day-details">
+          <div class="detail-row">
+            <span class="key">💨 Max Wind</span>
+            <span class="val-text">12.0 km/h</span>
+          </div>
+          <div class="detail-row">
+            <span class="key">🌧️ Precipitation</span>
+            <span class="val-text">0.0 mm</span>
+          </div>
+          <div class="precip-bar-wrap">
+            <div class="precip-label">
+              <span>Rain Probability</span>
+              <span>0%</span>
+            </div>
+            <div class="precip-bar-bg">
+              <div class="precip-bar-fill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Extended look-ahead note -->
+    <div style="margin-top:16px; padding: 14px 20px; background: rgba(56,182,255,0.06); border: 1px solid rgba(56,182,255,0.15); border-radius:12px; font-size:0.83rem; color:#7a9ab5;">
+      📌 <strong style="color:#a0c4d8;">Extended Outlook (Sep 29–Oct 1):</strong>
+      Temperatures gradually warm to a high of <strong style="color:#e0eafc;">22.7°C (Sep 29)</strong> before rain arrives late in the period —
+      precipitation probability rises to <strong style="color:#38b6ff;">48% on Sep 30</strong> and <strong style="color:#38b6ff;">51% on Oct 1</strong>,
+      with totals reaching <strong style="color:#38b6ff;">9.7 mm and 13.0 mm</strong> respectively. Plan outdoor activities for the next 3 days.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       AIR QUALITY
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <h2 class="section-title">🌬️ Air Quality Index</h2>
+    <div class="aqi-layout">
+      <div class="aqi-score-wrap">
+        <div class="aqi-ring">
+          <div class="aqi-num">51</div>
+          <div class="aqi-unit">US AQI</div>
+        </div>
+        <div class="aqi-label">⚠️ Moderate</div>
+        <div style="margin-top:8px; font-size:0.75rem; color:#6a8fa5; max-width:130px;">
+          Air quality is acceptable. Unusually sensitive people should consider reducing prolonged outdoor exertion.
+        </div>
+      </div>
+      <div>
+        <div class="pollutant-grid">
+          <div class="pollutant-card">
+            <div class="poll-name">PM 2.5</div>
+            <div class="poll-val">9.3 <span class="poll-unit">μg/m³</span></div>
+          </div>
+          <div class="pollutant-card">
+            <div class="poll-name">PM 10</div>
+            <div class="poll-val">9.3 <span class="poll-unit">μg/m³</span></div>
+          </div>
+          <div class="pollutant-card">
+            <div class="poll-name">CO</div>
+            <div class="poll-val">232 <span class="poll-unit">μg/m³</span></div>
+          </div>
+          <div class="pollutant-card">
+            <div class="poll-name">NO₂</div>
+            <div class="poll-val">31.2 <span class="poll-unit">μg/m³</span></div>
+          </div>
+          <div class="pollutant-card">
+            <div class="poll-name">Ozone (O₃)</div>
+            <div class="poll-val">57.0 <span class="poll-unit">μg/m³</span></div>
+          </div>
+        </div>
+        <div class="aqi-bar-section" style="margin-top:22px;">
+          <div style="font-size:0.75rem; color:#5d8aa0; margin-bottom:8px;">AQI Scale Indicator</div>
+          <div class="aqi-spectrum">
+            <!-- AQI 51 out of 300 max displayed → ~8.5% along scale -->
+            <div class="aqi-marker" style="left:8.5%"></div>
+          </div>
+          <div class="aqi-spectrum-labels">
+            <span>Good (0)</span>
+            <span>Moderate</span>
+            <span>Unhealthy</span>
+            <span>Very Unhealthy</span>
+            <span>Hazardous (300+)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       MARINE / LAKE MICHIGAN
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <h2 class="section-title">🌊 Lake Michigan Marine Conditions</h2>
+    <div style="margin-bottom:14px; font-size:0.82rem; color:#5d8aa0;">
+      📍 Data sourced for Lake Michigan nearshore zone — coordinates 41.96°N, 87.54°W
+    </div>
+    <div class="marine-grid">
+      <!-- Wave Height -->
+      <div class="marine-card">
+        <div class="marine-icon">🌊</div>
+        <div class="marine-metric">0.22 <span class="marine-unit">m</span></div>
+        <div class="marine-name">Wave Height</div>
+        <div class="marine-note">Calm &bull; ~0.7 ft</div>
+      </div>
+      <!-- Wave Direction -->
+      <div class="marine-card">
+        <div class="compass-ring" style="margin:0 auto 10px;">
+          <span class="compass-label n">N</span>
+          <span class="compass-label s">S</span>
+          <span class="compass-label e">E</span>
+          <span class="compass-label w">W</span>
+          <span class="compass-arrow">↑</span>
+        </div>
+        <div class="marine-metric">69°</div>
+        <div class="marine-name">Wave Direction</div>
+        <div class="marine-note">East-Northeast (ENE)</div>
+      </div>
+      <!-- Wave Period -->
+      <div class="marine-card">
+        <div class="marine-icon">⏱️</div>
+        <div class="marine-metric">2.5 <span class="marine-unit">s</span></div>
+        <div class="marine-name">Wave Period</div>
+        <div class="marine-note">Short-period wind chop</div>
+      </div>
+      <!-- Conditions Summary -->
+      <div class="marine-card">
+        <div class="marine-icon">⛵</div>
+        <div class="marine-metric" style="font-size:1.3rem; margin-top:4px;">Favorable</div>
+        <div class="marine-name">Boating Conditions</div>
+        <div class="marine-note">Calm waves, low swell — suitable for most watercraft</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════
+       ACTIONABLE INSIGHTS
+  ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <h2 class="section-title">💡 Actionable Insights &amp; Recommendations</h2>
+    <div class="insights-grid">
+      <div class="insight-card good">
+        <div class="insight-icon">🌞</div>
+        <div>
+          <div class="insight-title">Perfect Outdoor Window — Next 3 Days</div>
+          <div class="insight-body">
+            Sep 26–28 brings clear to partly cloudy skies with zero precipitation and mild temperatures (9–21°C). 
+            Ideal conditions for outdoor activities — hiking, cycling, or sightseeing along the Lakefront Trail.
+          </div>
+        </div>
+      </div>
+      <div class="insight-card moderate">
+        <div class="insight-icon">😷</div>
+        <div>
+          <div class="insight-title">Moderate Air Quality — Sensitive Groups Take Care</div>
+          <div class="insight-body">
+            US AQI of 51 places Chicago in the Moderate category. People with asthma, heart disease, or respiratory 
+            conditions should limit prolonged outdoor exertion. Ozone at 57 μg/m³ may cause mild irritation.
+          </div>
+        </div>
+      </div>
+      <div class="insight-card info">
+        <div class="insight-icon">🌊</div>
+        <div>
+          <div class="insight-title">Calm Lake Michigan — Great for Water Recreation</div>
+          <div class="insight-body">
+            Wave heights of just 0.22 m and a short 2.5-second period indicate very calm lake conditions. 
+            Excellent day for kayaking, paddleboarding, and recreational boating. ENE swell is non-threatening.
+          </div>
+        </div>
+      </div>
+      <div class="insight-card good">
+        <div class="insight-icon">👕</div>
+        <div>
+          <div class="insight-title">Light Jacket Weather</div>
+          <div class="insight-body">
+            Morning lows will dip to 9–12°C over the next few days — especially Sunday Sep 27 (9.4°C low). 
+            Layer up in the mornings and evenings. Afternoons are comfortable at 17–21°C.
+          </div>
+        </div>
+      </div>
+      <div class="insight-card caution">
+        <div class="insight-icon">🌧️</div>
+        <div>
+          <div class="insight-title">Rain Incoming Late in the Period</div>
+          <div class="insight-body">
+            From Sep 29 onward, rain probability climbs to 48–51% with heavy precipitation expected (up to 13 mm on Oct 1). 
+            Plan any outdoor events or travel for the Sep 26–28 window and prepare for wet conditions thereafter.
+          </div>
+        </div>
+      </div>
+      <div class="insight-card info">
+        <div class="insight-icon">💨</div>
+        <div>
+          <div class="insight-title">Moderate Wind — Cyclists Take Note</div>
+          <div class="insight-body">
+            Wind gusts up to 16.9 km/h tomorrow (Sep 26) and 17.4 km/h on Sep 29. While not hazardous, 
+            cyclists and runners should factor in headwinds, especially along the exposed lakefront areas.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <p>
+    🤖 Generated by <strong>Weather &amp; Environmental Reporting Agent</strong> &bull;
+    Data Sources: Open-Meteo Forecast, Air Quality API, Marine API &bull;
+    Report Date: <strong>September 25, 2026</strong>
+  </p>
+  <p style="margin-top:6px;">All data is for informational purposes only. Always verify conditions before outdoor or marine activities.</p>
+</footer>
+
+</body>
+</html>

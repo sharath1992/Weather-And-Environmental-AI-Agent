@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Raleigh Environmental Report – Next 3 Days</title>
+  <style>
+    :root {
+      --sky-blue: #e8f4fd;
+      --deep-blue: #1a73e8;
+      --card-bg: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --green: #16a34a;
+      --yellow: #ca8a04;
+      --orange: #ea580c;
+      --red: #dc2626;
+      --good-aqi: #22c55e;
+      --gradient-top: linear-gradient(135deg, #1e3a5f 0%, #1a73e8 60%, #63b3ed 100%);
+      --shadow: 0 4px 24px rgba(30,58,95,0.10);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f0f6ff;
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ── HERO HEADER ───────────────────────────────────────────── */
+    header {
+      background: var(--gradient-top);
+      color: #fff;
+      padding: 52px 32px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='30' cy='30' r='28' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='2'/%3E%3C/svg%3E") repeat;
+      opacity: 0.4;
+    }
+    header .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 50px;
+      padding: 5px 18px;
+      font-size: 0.78rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    header h1 { font-size: 2.6rem; font-weight: 800; letter-spacing: -0.5px; }
+    header p.sub {
+      margin-top: 8px;
+      font-size: 1rem;
+      opacity: 0.82;
+    }
+    header .current-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 60px;
+      padding: 10px 26px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
+    }
+    header .current-chip .temp { font-size: 2rem; font-weight: 800; }
+
+    /* ── MAIN CONTAINER ────────────────────────────────────────── */
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 20px 60px;
+    }
+
+    /* ── SECTION TITLES ────────────────────────────────────────── */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: #1e3a5f;
+      margin-bottom: 18px;
+      margin-top: 38px;
+    }
+    .section-title .icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 1.1rem;
+    }
+    .section-title .icon.blue  { background: #dbeafe; }
+    .section-title .icon.green { background: #dcfce7; }
+    .section-title .icon.teal  { background: #ccfbf1; }
+
+    /* ── FORECAST CARDS ────────────────────────────────────────── */
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 20px;
+    }
+
+    .forecast-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 24px;
+      border-top: 5px solid transparent;
+      transition: transform 0.2s;
+    }
+    .forecast-card:hover { transform: translateY(-3px); }
+    .forecast-card.day0 { border-top-color: #1a73e8; }
+    .forecast-card.day1 { border-top-color: #f59e0b; }
+    .forecast-card.day2 { border-top-color: #10b981; }
+
+    .forecast-card .date-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .forecast-card .day-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e3a5f;
+    }
+    .forecast-card .weather-icon { font-size: 2.4rem; margin: 14px 0 10px; }
+    .forecast-card .condition-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .temp-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .temp-box {
+      flex: 1;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .temp-box .label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .temp-box .value { font-size: 1.45rem; font-weight: 800; }
+    .temp-box.max .value { color: #dc2626; }
+    .temp-box.min .value { color: #2563eb; }
+
+    .stat-rows { display: flex; flex-direction: column; gap: 10px; }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 14px;
+      background: #f8fafc;
+      border-radius: 10px;
+      font-size: 0.88rem;
+    }
+    .stat-row .slabel { color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .stat-row .sval { font-weight: 700; color: #1e3a5f; }
+
+    /* precipitation bar */
+    .precip-bar-wrap { margin-top: 16px; }
+    .precip-bar-wrap .bar-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; color: var(--text-muted); margin-bottom: 5px;
+    }
+    .bar-track {
+      height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, #60a5fa, #1a73e8);
+      transition: width 0.6s ease;
+    }
+
+    /* ── AIR QUALITY SECTION ───────────────────────────────────── */
+    .aqi-panel {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+    @media (max-width: 600px) {
+      .aqi-panel { grid-template-columns: 1fr; text-align: center; }
+    }
+
+    .aqi-circle {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #d1fae5, #6ee7b7);
+      border: 5px solid #16a34a;
+      flex-shrink: 0;
+    }
+    .aqi-circle .aqi-num { font-size: 2.4rem; font-weight: 900; color: #14532d; }
+    .aqi-circle .aqi-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #166534; font-weight: 700; }
+
+    .aqi-status-badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      border-radius: 50px;
+      padding: 4px 16px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .aqi-description {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .pollutant-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+    .pollutant-card {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 12px 14px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+    .pollutant-card .p-name { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 4px; }
+    .pollutant-card .p-val { font-size: 1.1rem; font-weight: 800; color: #1e3a5f; }
+    .pollutant-card .p-unit { font-size: 0.68rem; color: var(--text-muted); }
+
+    /* AQI scale bar */
+    .aqi-scale-wrap { margin-top: 18px; }
+    .aqi-scale-label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 6px; }
+    .aqi-scale {
+      height: 10px; border-radius: 99px;
+      background: linear-gradient(90deg, #22c55e 0%, #a3e635 20%, #facc15 40%, #f97316 60%, #ef4444 80%, #7c3aed 100%);
+      position: relative;
+    }
+    .aqi-needle {
+      position: absolute; top: -4px;
+      width: 4px; height: 18px;
+      background: #1e3a5f;
+      border-radius: 2px;
+      transform: translateX(-50%);
+      box-shadow: 0 0 0 2px #fff;
+    }
+    .aqi-scale-ticks {
+      display: flex; justify-content: space-between;
+      font-size: 0.65rem; color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ── INSIGHTS SECTION ──────────────────────────────────────── */
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .insight-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      border-left: 4px solid transparent;
+    }
+    .insight-card.info   { border-left-color: #3b82f6; }
+    .insight-card.good   { border-left-color: #22c55e; }
+    .insight-card.warm   { border-left-color: #f59e0b; }
+    .insight-card.wind   { border-left-color: #8b5cf6; }
+    .insight-card.notice { border-left-color: #64748b; }
+
+    .insight-icon {
+      font-size: 1.6rem; flex-shrink: 0; margin-top: 2px;
+    }
+    .insight-body .i-title {
+      font-size: 0.88rem; font-weight: 700; color: #1e3a5f; margin-bottom: 4px;
+    }
+    .insight-body .i-desc {
+      font-size: 0.82rem; color: var(--text-muted); line-height: 1.5;
+    }
+
+    /* ── MARINE NOTICE ─────────────────────────────────────────── */
+    .marine-notice {
+      background: #f1f5f9;
+      border: 1px dashed #cbd5e1;
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .marine-notice .m-icon { font-size: 2.4rem; margin-bottom: 8px; }
+    .marine-notice p { font-size: 0.9rem; line-height: 1.6; }
+
+    /* ── FOOTER ────────────────────────────────────────────────── */
+    footer {
+      background: #1e3a5f;
+      color: rgba(255,255,255,0.65);
+      text-align: center;
+      padding: 22px;
+      font-size: 0.8rem;
+      letter-spacing: 0.03em;
+    }
+    footer strong { color: #fff; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ HEADER ═══════════════════════════════════════ -->
+<header>
+  <div class="badge">🌐 Environmental Dashboard</div>
+  <h1>Raleigh, North Carolina</h1>
+  <p class="sub">3-Day Weather, Air Quality &amp; Environmental Report &nbsp;|&nbsp; Generated: September 25, 2026</p>
+  <div class="current-chip">
+    ☀️
+    <span>Currently:</span>
+    <span class="temp">13.7°C / 56.7°F</span>
+    <span>·</span>
+    <span>Humidity: 60%</span>
+    <span>·</span>
+    <span>Clear Sky</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ═══════════════════════════════ 3-DAY FORECAST ════════════════════════════════════ -->
+  <div class="section-title">
+    <div class="icon blue">🌤️</div>
+    3-Day Weather Forecast
+  </div>
+
+  <div class="forecast-grid">
+
+    <!-- DAY 1 – Sep 26 -->
+    <div class="forecast-card day0">
+      <div class="date-label">Day 1 &nbsp;·&nbsp; Friday</div>
+      <div class="day-name">September 26, 2026</div>
+      <div class="weather-icon">☀️</div>
+      <div class="condition-label">Clear Sky &amp; Sunny</div>
+      <div class="temp-row">
+        <div class="temp-box max">
+          <div class="label">High</div>
+          <div class="value">26.2°C</div>
+          <div style="font-size:0.7rem;color:#94a3b8;">79.2°F</div>
+        </div>
+        <div class="temp-box min">
+          <div class="label">Low</div>
+          <div class="value">11.4°C</div>
+          <div style="font-size:0.7rem;color:#94a3b8;">52.5°F</div>
+        </div>
+      </div>
+      <div class="stat-rows">
+        <div class="stat-row">
+          <span class="slabel">💧 Precipitation</span>
+          <span class="sval">0.0 mm</span>
+        </div>
+        <div class="stat-row">
+          <span class="slabel">🌬️ Max Wind</span>
+          <span class="sval">22.0 km/h</span>
+        </div>
+        <div class="stat-row">
+          <span class="slabel">🌂 Rain Chance</span>
+          <span class="sval">0%</span>
+        </div>
+      </div>
+      <div class="precip-bar-wrap">
+        <div class="bar-label"><span>Precipitation Probability</span><span>0%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;"></div></div>
+      </div>
+    </div>
+
+    <!-- DAY 2 – Sep 27 -->
+    <div class="forecast-card day1">
+      <div class="date-label">Day 2 &nbsp;·&nbsp; Saturday</div>
+      <div class="day-name">September 27, 2026</div>
+      <div class="weather-icon">🌤️</div>
+      <div class="condition-label">Mostly Clear, Slight Breeze</div>
+      <div class="temp-row">
+        <div class="temp-box max">
+          <div class="label">High</div>
+          <div class="value">26.7°C</div>
+          <div style="font-size:0.7rem;color:#94a3b8;">80.1°F</div>
+        </div>
+        <div class="temp-box min">
+          <div class="label">Low</div>
+          <div class="value">12.7°C</div>
+          <div style="font-size:0.7rem;color:#94a3b8;">54.9°F</div>
+        </div>
+      </div>
+      <div class="stat-rows">
+        <div class="stat-row">
+          <span class="slabel">💧 Precipitation</span>
+          <span class="sval">0.0 mm</span>
+        </div>
+        <div class="stat-row">
+          <span class="slabel">🌬️ Max Wind</span>
+          <span class="sval">18.9 km/h</span>
+        </div>
+        <div class="stat-row">
+          <span class="slabel">🌂 Rain Chance</span>
+          <span class="sval">4%</span>
+        </div>
+      </div>
+      <div class="precip-bar-wrap">
+        <div class="bar-label"><span>Precipitation Probability</span><span>4%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:4%;"></div></div>
+      </div>
+    </div>
+
+    <!-- DAY 3 – Sep 28 -->
+    <div class="forecast-card day2">
+      <div class="date-label">Day 3 &nbsp;·&nbsp; Sunday</div>
+      <div class="day-name">September 28, 2026</div>
+      <div class="weather-icon">🌡️</div>
+      <div class="condition-label">Warmer &amp; Clear, Light Wind</div>
+      <div class="temp-row">
+        <div class="temp-box max">
+          <div class="label">High</div>
+          <div class="value">27.5°C</div>
+          <div style="font-size:0.7rem;color:#94a3b8;">81.5°F</div>
+        </div>
+        <div class="temp-box min">
+          <div class="label">Low</div>
+          <div class="value">16.6°C</div>
+          <div style="font-size:0.7rem;color:#94a3b8;">61.9°F</div>
+        </div>
+      </div>
+      <div class="stat-rows">
+        <div class="stat-row">
+          <span class="slabel">💧 Precipitation</span>
+          <span class="sval">0.0 mm</span>
+        </div>
+        <div class="stat-row">
+          <span class="slabel">🌬️ Max Wind</span>
+          <span class="sval">13.7 km/h</span>
+        </div>
+        <div class="stat-row">
+          <span class="slabel">🌂 Rain Chance</span>
+          <span class="sval">0%</span>
+        </div>
+      </div>
+      <div class="precip-bar-wrap">
+        <div class="bar-label"><span>Precipitation Probability</span><span>0%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:0%;"></div></div>
+      </div>
+    </div>
+
+  </div><!-- /forecast-grid -->
+
+  <!-- ═══════════════════════════════ AIR QUALITY ═══════════════════════════════════════ -->
+  <div class="section-title" style="margin-top:44px;">
+    <div class="icon green">🍃</div>
+    Current Air Quality Index
+  </div>
+
+  <div class="aqi-panel">
+    <div class="aqi-circle">
+      <div class="aqi-num">38</div>
+      <div class="aqi-label">US AQI</div>
+    </div>
+    <div>
+      <div class="aqi-status-badge">✅ Good Air Quality</div>
+      <div class="aqi-description">
+        Raleigh's air quality is currently in the <strong>Good</strong> range (AQI 0–50).
+        Air pollution poses <strong>little or no risk</strong> to residents, including sensitive groups
+        such as children, the elderly, and those with respiratory conditions.
+        It's an excellent day for outdoor activities, exercise, and spending time outside.
+      </div>
+      <div class="pollutant-grid">
+        <div class="pollutant-card">
+          <div class="p-name">PM2.5</div>
+          <div class="p-val">3.3</div>
+          <div class="p-unit">μg/m³</div>
+        </div>
+        <div class="pollutant-card">
+          <div class="p-name">PM10</div>
+          <div class="p-val">3.5</div>
+          <div class="p-unit">μg/m³</div>
+        </div>
+        <div class="pollutant-card">
+          <div class="p-name">Carbon Monoxide</div>
+          <div class="p-val">154.0</div>
+          <div class="p-unit">μg/m³</div>
+        </div>
+        <div class="pollutant-card">
+          <div class="p-name">NO₂</div>
+          <div class="p-val">4.3</div>
+          <div class="p-unit">μg/m³</div>
+        </div>
+        <div class="pollutant-card">
+          <div class="p-name">Ozone (O₃)</div>
+          <div class="p-val">70.0</div>
+          <div class="p-unit">μg/m³</div>
+        </div>
+      </div>
+      <div class="aqi-scale-wrap">
+        <div class="aqi-scale-label">AQI Scale (0–300+)</div>
+        <div class="aqi-scale">
+          <!-- AQI 38 → ~12.7% across 300 range -->
+          <div class="aqi-needle" style="left: 12.7%;"></div>
+        </div>
+        <div class="aqi-scale-ticks">
+          <span>0 Good</span><span>50</span><span>100 Moderate</span><span>150</span><span>200 Unhealthy</span><span>300+</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ MARINE SECTION ════════════════════════════════════ -->
+  <div class="section-title" style="margin-top:44px;">
+    <div class="icon teal">🌊</div>
+    Marine &amp; Coastal Data
+  </div>
+
+  <div class="marine-notice">
+    <div class="m-icon">🏙️</div>
+    <p>
+      <strong>No marine data available for Raleigh.</strong><br/>
+      Raleigh is an <strong>inland city</strong> located approximately 170 miles from the Atlantic coast
+      in central North Carolina. Marine and coastal wave data is not applicable for this location.
+      For coastal marine conditions, consider monitoring data from nearby coastal cities such as
+      <strong>Wilmington, NC</strong> or <strong>Outer Banks, NC</strong>.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════════════ ACTIONABLE INSIGHTS ═══════════════════════════════ -->
+  <div class="section-title" style="margin-top:44px;">
+    <div class="icon blue">💡</div>
+    Actionable Insights &amp; Recommendations
+  </div>
+
+  <div class="insights-grid">
+    <div class="insight-card good">
+      <div class="insight-icon">🏃</div>
+      <div class="insight-body">
+        <div class="i-title">Great Days for Outdoor Activities</div>
+        <div class="i-desc">All 3 days show zero precipitation and clear skies. Temperatures peak between 26–27°C — ideal conditions for running, cycling, hiking, or outdoor sports throughout the weekend.</div>
+      </div>
+    </div>
+    <div class="insight-card info">
+      <div class="insight-icon">🌡️</div>
+      <div class="insight-body">
+        <div class="i-title">Warming Trend Ahead</div>
+        <div class="i-desc">A steady warming trend is developing — lows rise from 11°C on Friday to 16°C by Sunday. Expect noticeably warmer nights by the end of the weekend. Light layers are recommended for evenings early in the period.</div>
+      </div>
+    </div>
+    <div class="insight-card wind">
+      <div class="insight-icon">🌬️</div>
+      <div class="insight-body">
+        <div class="i-title">Breezy on Friday &amp; Saturday</div>
+        <div class="i-desc">Wind speeds of up to 22 km/h on Friday may affect cyclists and outdoor dining setups. Winds calm significantly by Sunday (13.7 km/h), making it the most pleasant day of the three.</div>
+      </div>
+    </div>
+    <div class="insight-card good">
+      <div class="insight-icon">🍃</div>
+      <div class="insight-body">
+        <div class="i-title">Excellent Air Quality — No Restrictions</div>
+        <div class="i-desc">With a US AQI of just 38, Raleigh's air is clean and healthy. PM2.5 (3.3 μg/m³) and PM10 (3.5 μg/m³) levels are well below safe thresholds. No masks or air quality precautions needed.</div>
+      </div>
+    </div>
+    <div class="insight-card warm">
+      <div class="insight-icon">☀️</div>
+      <div class="insight-body">
+        <div class="i-title">Sun Protection Advised</div>
+        <div class="i-desc">Clear skies and autumn sun can still be intense during midday (11 am–3 pm). Apply SPF 30+ sunscreen if spending extended time outdoors, especially on Saturday and Sunday afternoons.</div>
+      </div>
+    </div>
+    <div class="insight-card notice">
+      <div class="insight-icon">🌧️</div>
+      <div class="insight-body">
+        <div class="i-title">No Rain Expected — Hydration Matters</div>
+        <div class="i-desc">No rainfall is forecast across all 3 days. With dry, warm weather and moderate winds, stay hydrated during outdoor activities. Gardens and green spaces may benefit from manual watering.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ SUMMARY BOX ═══════════════════════════════════════ -->
+  <div style="margin-top:38px; background:linear-gradient(135deg,#e0f2fe,#dbeafe); border-radius:var(--radius); padding:28px 28px; border:1px solid #bfdbfe;">
+    <div style="font-size:1rem;font-weight:700;color:#1e3a5f;margin-bottom:10px;">📋 Weekend Summary at a Glance</div>
+    <p style="color:#1e40af;font-size:0.92rem;line-height:1.75;">
+      Raleigh is set for a <strong>beautiful, rain-free 3-day stretch</strong> through the weekend of September 26–28, 2026.
+      Temperatures will climb from pleasant highs of <strong>26°C on Friday</strong> to a warmer <strong>27.5°C on Sunday</strong>,
+      with chilly but comfortable overnight lows. There is essentially <strong>zero precipitation risk</strong> across all days.
+      Air quality is in the <strong>Good category (AQI 38)</strong> — no health concerns for any population group.
+      Winds will be at their strongest on Friday (~22 km/h), tapering to calm by Sunday.
+      Overall, this is an excellent period for outdoor recreation, travel, and events in Raleigh.
+      As an inland city, no marine or coastal considerations apply.
+    </p>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════ FOOTER ═══════════════════════════════════════ -->
+<footer>
+  <strong>Raleigh Environmental Dashboard</strong> &nbsp;·&nbsp;
+  Data Source: Open-Meteo API &nbsp;·&nbsp;
+  Coordinates: 35.7721°N, 78.6386°W &nbsp;·&nbsp;
+  Timezone: America/New_York (GMT-4) &nbsp;·&nbsp;
+  Report Generated: September 25, 2026
+</footer>
+
+</body>
+</html>
