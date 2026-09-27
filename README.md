@@ -6,7 +6,7 @@ The project is a hands-on example of the ReAct (Reason + Act) pattern, tool use 
 
 ## Agent Workflow
 
-!workflow.png
+!<img width="3000" height="2020" alt="workflow" src="https://github.com/user-attachments/assets/fb11257e-fbc5-4305-b692-aa3c01dc40be" />
 
 
 ## Features
